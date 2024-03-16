@@ -466,7 +466,13 @@ TcpCubic::GetSsThresh(Ptr<const TcpSocketState> tcb, uint32_t bytesInFlight)
     m_epochStart = Time::Min(); // end of epoch
 
     /* Formula taken from the Linux kernel */
-    uint32_t ssThresh = std::max(static_cast<uint32_t>(segCwnd * m_beta), 2U) * tcb->m_segmentSize;
+    uint32_t ssThresh;
+    if (tcb->m_ecnMode == TcpSocketState::AbeEcn && tcb->m_ecnState == TcpSocketState::ECN_ECE_RCVD){
+	ssThresh = std::max(static_cast<uint32_t>(segCwnd * 85 / 100), 2U) * tcb->m_segmentSize;
+    }
+    else{
+    	ssThresh = std::max(static_cast<uint32_t>(segCwnd * m_beta), 2U) * tcb->m_segmentSize;
+    }
 
     NS_LOG_DEBUG("SsThresh = " << ssThresh);
 
