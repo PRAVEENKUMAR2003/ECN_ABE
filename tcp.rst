@@ -1145,6 +1145,12 @@ The following ECN states are declared in ``src/internet/model/tcp-socket-state.h
     } EcnStates_t;
 
 Current implementation of ECN is based on RFC 3168 and is referred as Classic ECN.
+By default, the mode of ECN used is Classic ECN. To change it to ABE ECN, set the 
+value of the attribute ``ns3::TcpSocketBase::EcnMode`` to ``AbeEcn``. This mode
+implements ECN based on RFC 8511.
+
+For example::
+  Config::SetDefault("ns3::TcpSocketBase::EcnMode", StringValue("AbeEcn"))
 
 The following enum represents the mode of ECN::
 
@@ -1152,6 +1158,7 @@ The following enum represents the mode of ECN::
     {
       ClassicEcn,  //!< ECN functionality as described in RFC 3168.
       DctcpEcn,    //!< ECN functionality as described in RFC 8257. Note: this mode is specific to DCTCP.
+      AbeEcn,      //!< ECN functionality as described in RFC 8511.
     } EcnMode_t;
 
 The following are some important ECN parameters::
