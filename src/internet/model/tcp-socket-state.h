@@ -135,9 +135,11 @@ class TcpSocketState : public Object
      */
     enum EcnMode_t
     {
-        ClassicEcn, //!< ECN functionality as described in RFC 3168.
-        DctcpEcn,   //!< ECN functionality as described in RFC 8257. Note: this mode is specific to
-                    //!< DCTCP.
+        ClassicEcn = 0,      //!< ECN functionality as described in RFC 3168.
+        DctcpEcn = 1 << 0,   //!< ECN functionality as described in RFC 8257. Note: this mode is 
+                             //!< specific to DCTCP.
+        AbeEcn = 1 << 1,     //!< ECN functionality as described in RFC 8511. Note: this mode is
+                             //!< specific to TCPNewReno, TCPLinuxReno and TCPCubic
     };
 
     /**

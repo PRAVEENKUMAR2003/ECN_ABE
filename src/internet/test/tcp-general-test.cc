@@ -998,6 +998,23 @@ TcpGeneralTest::SetUseEcn(SocketWho who, TcpSocketState::UseEcn_t useEcn)
 }
 
 void
+TcpGeneralTest::SetEcnMode(SocketWho who, TcpSocketState::EcnMode_t ecnMode)
+{
+    if (who == SENDER)
+    {
+        m_senderSocket->SetEcnMode(ecnMode);
+    }
+    else if (who == RECEIVER)
+    {
+        m_receiverSocket->SetEcnMode(ecnMode);
+    }
+    else
+    {
+        NS_FATAL_ERROR("Not defined");
+    }
+}
+
+void
 TcpGeneralTest::SetPacingStatus(SocketWho who, bool pacing)
 {
     if (who == SENDER)

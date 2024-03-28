@@ -245,6 +245,10 @@ TcpNewReno::GetSsThresh(Ptr<const TcpSocketState> state, uint32_t bytesInFlight)
 {
     NS_LOG_FUNCTION(this << state << bytesInFlight);
 
+    if (state->m_ecnMode & TcpSocketState::AbeEcn && state->m_ecnState == TcpSocketState::ECN_ECE_RCVD){
+	    return std::max(2 * state->m_segmentSize, bytesInFlight * 80 / 100);
+    }
+
     return std::max(2 * state->m_segmentSize, bytesInFlight / 2);
 }
 

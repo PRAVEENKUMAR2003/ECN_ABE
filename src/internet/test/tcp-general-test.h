@@ -608,6 +608,14 @@ class TcpGeneralTest : public TestCase
     void SetUseEcn(SocketWho who, TcpSocketState::UseEcn_t useEcn);
 
     /**
+     * \brief Forcefully set the ECN type
+     *
+     * \param who socket to force
+     * \param useEcn Value representing the type of ECN usage requested
+     */
+    void SetEcnMode(SocketWho who, TcpSocketState::EcnMode_t ecnMode);
+
+    /**
      * \brief Enable or disable pacing in the TCP socket
      *
      * \param who socket

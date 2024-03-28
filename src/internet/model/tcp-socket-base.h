@@ -567,6 +567,13 @@ class TcpSocketBase : public TcpSocket
     void SetUseEcn(TcpSocketState::UseEcn_t useEcn);
 
     /**
+     * \brief Set ECN type on the socket
+     *
+     * \param ecnMode type of ECN to use.
+     */
+    void SetEcnMode(TcpSocketState::EcnMode_t ecnMode);
+    
+    /**
      * \brief Enable or disable pacing
      * \param pacing Boolean to enable or disable pacing
      */

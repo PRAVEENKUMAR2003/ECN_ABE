@@ -171,6 +171,14 @@ TcpSocketBase::GetTypeId()
                                           "On",
                                           TcpSocketState::AcceptOnly,
                                           "AcceptOnly"))
+            .AddAttribute("EcnMode",
+                          "Parameter to set ECN mode",
+                          EnumValue(TcpSocketState::ClassicEcn),
+                          MakeEnumAccessor<TcpSocketState::EcnMode_t>(&TcpSocketBase::SetEcnMode),
+                          MakeEnumChecker(TcpSocketState::ClassicEcn, 
+                                          "ClassicEcn",
+                                          TcpSocketState::AbeEcn, 
+                                          "AbeEcn"))
             .AddTraceSource("RTO",
                             "Retransmission timeout",
                             MakeTraceSourceAccessor(&TcpSocketBase::m_rto),
@@ -3057,7 +3065,7 @@ TcpSocketBase::AddSocketTags(const Ptr<Packet>& p) const
     else
     {
         if ((m_tcb->m_ecnState != TcpSocketState::ECN_DISABLED && p->GetSize() > 0) ||
-            m_tcb->m_ecnMode == TcpSocketState::DctcpEcn)
+            m_tcb->m_ecnMode & TcpSocketState::DctcpEcn)
         {
             SocketIpTosTag ipTosTag;
             ipTosTag.SetTos(MarkEcnCodePoint(GetIpTos(), m_tcb->m_ectCodePoint));
@@ -3082,7 +3090,7 @@ TcpSocketBase::AddSocketTags(const Ptr<Packet>& p) const
     else
     {
         if ((m_tcb->m_ecnState != TcpSocketState::ECN_DISABLED && p->GetSize() > 0) ||
-            m_tcb->m_ecnMode == TcpSocketState::DctcpEcn)
+            m_tcb->m_ecnMode & TcpSocketState::DctcpEcn)
         {
             SocketIpv6TclassTag ipTclassTag;
             ipTclassTag.SetTclass(MarkEcnCodePoint(GetIpv6Tclass(), m_tcb->m_ectCodePoint));
@@ -4659,6 +4667,13 @@ TcpSocketBase::SetUseEcn(TcpSocketState::UseEcn_t useEcn)
 {
     NS_LOG_FUNCTION(this << useEcn);
     m_tcb->m_useEcn = useEcn;
+}
+
+void
+TcpSocketBase::SetEcnMode(TcpSocketState::EcnMode_t ecnMode)
+{
+    NS_LOG_FUNCTION(this << ecnMode);
+    m_tcb->m_ecnMode = ecnMode;
 }
 
 uint32_t

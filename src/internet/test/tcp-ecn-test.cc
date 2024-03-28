@@ -61,7 +61,7 @@ class TcpEcnTest : public TcpGeneralTest
      * \param testcase test case number
      * \param desc Description about the ECN capabilities of sender and receiver
      */
-    TcpEcnTest(uint32_t testcase, const std::string& desc);
+    TcpEcnTest(uint32_t testcase, const std::string& desc, TypeId CongControlTypeId);
 
   protected:
     void CWndTrace(uint32_t oldValue, uint32_t newValue) override;
@@ -76,6 +76,7 @@ class TcpEcnTest : public TcpGeneralTest
     uint32_t m_senderReceived;   //!< Number of segments received by the sender
     uint32_t m_receiverReceived; //!< Number of segments received by the receiver
     uint32_t m_testcase;         //!< Test case type
+    TypeId m_congControlTypeId;
 };
 
 /**
@@ -203,6 +204,10 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
+        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        {
+            ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
+        }
         else
         {
             if (m_tcb->m_ecnState != TcpSocketState::ECN_DISABLED && (GetIpTos() & 0x3) == 0)
@@ -227,6 +232,11 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
+        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        {
+            ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
+        }
+        
         else
         {
             if (m_tcb->m_ecnState != TcpSocketState::ECN_DISABLED)
@@ -245,6 +255,10 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
         else if (m_testcase == 6 && (m_dataPacketSent == 4 || m_dataPacketSent == 5))
+        {
+            ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
+        }
+        else if (m_testcase == 7 && (m_dataPacketSent == 5))
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
@@ -269,6 +283,10 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
         else if (m_testcase == 6 && (m_dataPacketSent == 4 || m_dataPacketSent == 5))
+        {
+            ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
+        }
+        else if (m_testcase == 7 && (m_dataPacketSent == 5))
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
@@ -390,13 +408,14 @@ TcpSocketCongestedRouter::Fork()
     return CopyObject<TcpSocketCongestedRouter>(this);
 }
 
-TcpEcnTest::TcpEcnTest(uint32_t testcase, const std::string& desc)
+TcpEcnTest::TcpEcnTest(uint32_t testcase, const std::string& desc, TypeId CongControlTypeId)
     : TcpGeneralTest(desc),
       m_cwndChangeCount(0),
       m_senderSent(0),
       m_senderReceived(0),
       m_receiverReceived(0),
-      m_testcase(testcase)
+      m_testcase(testcase),
+      m_congControlTypeId(CongControlTypeId)
 {
 }
 
@@ -407,6 +426,12 @@ TcpEcnTest::ConfigureProperties()
     if (m_testcase == 2 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
     {
         SetUseEcn(SENDER, TcpSocketState::On);
+    }
+    if( m_testcase ==7)
+    {
+    	SetUseEcn(SENDER, TcpSocketState::On);
+        SetEcnMode(SENDER, TcpSocketState::AbeEcn);
+        SetUseEcn(RECEIVER, TcpSocketState::On);   
     }
     if (m_testcase == 3 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
     {
@@ -430,6 +455,22 @@ TcpEcnTest::CWndTrace(uint32_t oldValue, uint32_t newValue)
                                   "Congestion window should not drop below 2 segments");
         }
     }
+    if (m_testcase == 7)
+    {
+    	NS_LOG_FUNCTION(oldValue << newValue);
+        if (newValue < oldValue && (m_congControlTypeId == TcpLinuxReno::GetTypeId() || m_congControlTypeId == TcpNewReno::GetTypeId()))
+        {
+            NS_TEST_ASSERT_MSG_EQ(newValue,
+		                  oldValue*0.80,
+		                          "Congestion window check for Tcp Linux Reno and Tcp New Reno");
+        }
+        else if (newValue < oldValue && m_congControlTypeId == TcpCubic::GetTypeId())
+        {
+            NS_TEST_ASSERT_MSG_EQ(newValue,
+		                  std::max(static_cast<uint32_t>(oldValue/500*0.85), 2U) * 500,
+		                          "Congestion window check for Tcp Cubic");
+        }
+    }
 }
 
 void
@@ -442,7 +483,7 @@ TcpEcnTest::Rx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
             NS_TEST_ASSERT_MSG_NE(((h.GetFlags()) & TcpHeader::SYN),
                                   0,
                                   "SYN should be received as first message at the receiver");
-            if (m_testcase == 2 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
+            if (m_testcase == 2 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6 || m_testcase == 7)
             {
                 NS_TEST_ASSERT_MSG_NE(
                     ((h.GetFlags()) & TcpHeader::ECE) && ((h.GetFlags()) & TcpHeader::CWR),
@@ -481,7 +522,7 @@ TcpEcnTest::Rx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
                                       ((h.GetFlags()) & TcpHeader::ACK),
                                   0,
                                   "SYN+ACK received as first message at sender");
-            if (m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
+            if (m_testcase == 4 || m_testcase == 5 || m_testcase == 6 || m_testcase == 7)
             {
                 NS_TEST_ASSERT_MSG_NE(
                     (h.GetFlags() & TcpHeader::ECE),
@@ -525,7 +566,7 @@ TcpEcnTest::Tx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
             {
                 ipTos = static_cast<uint16_t>(ipTosTag.GetTos());
             }
-            if (m_testcase == 4 || m_testcase == 6)
+            if (m_testcase == 4 || m_testcase == 6 || m_testcase == 7)
             {
                 NS_TEST_ASSERT_MSG_EQ(ipTos,
                                       0x2,
@@ -563,7 +604,7 @@ TcpEcnTest::Tx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
 Ptr<TcpSocketMsgBase>
 TcpEcnTest::CreateSenderSocket(Ptr<Node> node)
 {
-    if (m_testcase == 5 || m_testcase == 6)
+    if (m_testcase == 5 || m_testcase == 6 || m_testcase == 7)
     {
         Ptr<TcpSocketCongestedRouter> socket = DynamicCast<TcpSocketCongestedRouter>(
             CreateSocket(node, TcpSocketCongestedRouter::GetTypeId(), m_congControlTypeId));
@@ -589,28 +630,52 @@ class TcpEcnTestSuite : public TestSuite
     {
         AddTestCase(new TcpEcnTest(
                         1,
-                        "ECN Negotiation Test : ECN incapable sender and ECN incapable receiver"),
+                        "ECN Negotiation Test : ECN incapable sender and ECN incapable receiver",
+                        TcpNewReno::GetTypeId()),
                     TestCase::QUICK);
         AddTestCase(
             new TcpEcnTest(2,
-                           "ECN Negotiation Test : ECN capable sender and ECN incapable receiver"),
+                           "ECN Negotiation Test : ECN capable sender and ECN incapable receiver",
+                           TcpNewReno::GetTypeId()),
             TestCase::QUICK);
         AddTestCase(
             new TcpEcnTest(3,
-                           "ECN Negotiation Test : ECN incapable sender and ECN capable receiver"),
+                           "ECN Negotiation Test : ECN incapable sender and ECN capable receiver",
+                           TcpNewReno::GetTypeId()),
             TestCase::QUICK);
         AddTestCase(
-            new TcpEcnTest(4, "ECN Negotiation Test : ECN capable sender and ECN capable receiver"),
+            new TcpEcnTest(4, "ECN Negotiation Test : ECN capable sender and ECN capable receiver",
+                           TcpNewReno::GetTypeId()),
             TestCase::QUICK);
         AddTestCase(
             new TcpEcnTest(
                 5,
-                "ECE and CWR Functionality Test: ECN capable sender and ECN capable receiver"),
+                "ECE and CWR Functionality Test: ECN capable sender and ECN capable receiver",
+                TcpNewReno::GetTypeId()),
             TestCase::QUICK);
         AddTestCase(
             new TcpEcnTest(
                 6,
-                "Congestion Window Reduction Test :ECN capable sender and ECN capable receiver"),
+                "Congestion Window Reduction Test :ECN capable sender and ECN capable receiver",
+                           TcpNewReno::GetTypeId()),
+            TestCase::QUICK);
+        AddTestCase(
+            new TcpEcnTest(
+                7,
+                "Congestion Window Reduction in ABE Test for Tcp Linux Reno:ECN capable sender and" 
+                " ECN capable receiver", TcpLinuxReno::GetTypeId()),
+            TestCase::QUICK);
+        AddTestCase(
+            new TcpEcnTest(
+                7,
+                "Congestion Window Reduction in ABE Test for Tcp New Reno:ECN capable sender and" 
+                "ECN capable receiver", TcpNewReno::GetTypeId()),
+            TestCase::QUICK);
+        AddTestCase(
+            new TcpEcnTest(
+                7,
+                "Congestion Window Reduction in ABE Test for Tcp Cubic:ECN capable sender and" 
+                "ECN capable receiver", TcpCubic::GetTypeId()),
             TestCase::QUICK);
     }
 };
