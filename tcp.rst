@@ -1156,9 +1156,11 @@ The following enum represents the mode of ECN::
 
   typedef enum
     {
-      ClassicEcn,  //!< ECN functionality as described in RFC 3168.
-      DctcpEcn,    //!< ECN functionality as described in RFC 8257. Note: this mode is specific to DCTCP.
-      AbeEcn,      //!< ECN functionality as described in RFC 8511.
+      ClassicEcn = 0,         //!< ECN functionality as described in RFC 3168.
+      DctcpEcn   = 1 << 0,    //!< ECN functionality as described in RFC 8257. Note: this mode is 
+                              //!< specific to DCTCP.
+      AbeEcn     = 1 << 1,    //!< ECN functionality as described in RFC 8511. Note: this mode is
+                              //!< specific to TCPNewReno, TCPLinuxReno and TCPCubic
     } EcnMode_t;
 
 The following are some important ECN parameters::
