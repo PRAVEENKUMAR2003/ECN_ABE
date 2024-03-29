@@ -35,6 +35,9 @@
 #include "ns3/tcp-rx-buffer.h"
 #include "ns3/tcp-tx-buffer.h"
 
+#include "ns3/tcp-linux-reno.h"
+#include "ns3/tcp-cubic.h"
+
 namespace ns3
 {
 
@@ -65,6 +68,7 @@ class TcpEcnTest : public TcpGeneralTest
 
   protected:
     void CWndTrace(uint32_t oldValue, uint32_t newValue) override;
+    void BytesInFlightTrace(uint32_t oldValue, uint32_t newValue) override;
     void Rx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who) override;
     void Tx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who) override;
     Ptr<TcpSocketMsgBase> CreateSenderSocket(Ptr<Node> node) override;
@@ -76,7 +80,8 @@ class TcpEcnTest : public TcpGeneralTest
     uint32_t m_senderReceived;   //!< Number of segments received by the sender
     uint32_t m_receiverReceived; //!< Number of segments received by the receiver
     uint32_t m_testcase;         //!< Test case type
-    TypeId m_congControlTypeId;
+    TypeId m_congControlTypeId;	 //!< Congestion control Id
+    uint32_t m_bytesInFlight;	 //!< Number of bytes in flight	
 };
 
 /**
@@ -415,7 +420,8 @@ TcpEcnTest::TcpEcnTest(uint32_t testcase, const std::string& desc, TypeId CongCo
       m_senderReceived(0),
       m_receiverReceived(0),
       m_testcase(testcase),
-      m_congControlTypeId(CongControlTypeId)
+      m_congControlTypeId(CongControlTypeId),
+      m_bytesInFlight(0)
 {
 }
 
@@ -458,20 +464,34 @@ TcpEcnTest::CWndTrace(uint32_t oldValue, uint32_t newValue)
     if (m_testcase == 7)
     {
     	NS_LOG_FUNCTION(oldValue << newValue);
-        if (newValue < oldValue && (m_congControlTypeId == TcpLinuxReno::GetTypeId() || m_congControlTypeId == TcpNewReno::GetTypeId()))
+        if (newValue < oldValue && m_congControlTypeId == TcpLinuxReno::GetTypeId())
         {
             NS_TEST_ASSERT_MSG_EQ(newValue,
-		                  oldValue*0.80,
-		                          "Congestion window check for Tcp Linux Reno and Tcp New Reno");
+		                  std::max<uint32_t>(1000, oldValue * 0.8),
+		                          "Congestion window check for Tcp Linux Reno");
         }
         else if (newValue < oldValue && m_congControlTypeId == TcpCubic::GetTypeId())
         {
             NS_TEST_ASSERT_MSG_EQ(newValue,
-		                  std::max(static_cast<uint32_t>(oldValue/500*0.85), 2U) * 500,
+		                  std::max(static_cast<uint32_t>(oldValue/500*0.85), 1U) * 500,
 		                          "Congestion window check for Tcp Cubic");
+        }
+        else if (newValue < oldValue && m_congControlTypeId == TcpNewReno::GetTypeId())
+        {
+            NS_TEST_ASSERT_MSG_EQ(newValue,
+		                  std::max(1000U, m_bytesInFlight * 80 / 100),
+		                          "Congestion window check for Tcp New Reno");
         }
     }
 }
+
+void
+TcpEcnTest::BytesInFlightTrace(uint32_t oldValue, uint32_t newValue)
+{
+   	m_bytesInFlight = newValue;
+}
+
+
 
 void
 TcpEcnTest::Rx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
