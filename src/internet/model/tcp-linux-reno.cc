@@ -141,7 +141,7 @@ TcpLinuxReno::GetSsThresh(Ptr<const TcpSocketState> state, uint32_t bytesInFligh
     NS_LOG_FUNCTION(this << state << bytesInFlight);
 
     if (state->m_ecnMode & TcpSocketState::AbeEcn && state->m_ecnState == TcpSocketState::ECN_ECE_RCVD){
-	    return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd * 80 / 100);
+	    return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd * 70 / 100);
     }
     
     // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);

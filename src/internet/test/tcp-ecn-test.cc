@@ -476,7 +476,7 @@ TcpEcnTest::CWndTrace(uint32_t oldValue, uint32_t newValue)
         if (newValue < oldValue && m_congControlTypeId == TcpLinuxReno::GetTypeId())
         {
             NS_TEST_ASSERT_MSG_EQ(newValue,
-		                  std::max<uint32_t>(1000, oldValue * 0.8),
+		                  std::max<uint32_t>(1000, oldValue * 0.7),
 		                          "Congestion window check for Tcp Linux Reno");
         }
         else if (newValue < oldValue && m_congControlTypeId == TcpCubic::GetTypeId())
@@ -488,7 +488,7 @@ TcpEcnTest::CWndTrace(uint32_t oldValue, uint32_t newValue)
         else if (newValue < oldValue && m_congControlTypeId == TcpNewReno::GetTypeId())
         {
             NS_TEST_ASSERT_MSG_EQ(newValue,
-		                  std::max(1000U, m_bytesInFlight * 80 / 100),
+		                  std::max(1000U, m_bytesInFlight * 70 / 100),
 		                          "Congestion window check for Tcp New Reno");
         }
     }
