@@ -1,8 +1,14 @@
 # ECN ABE Implementation in NS3
 
-![Progress](https://img.shields.io/badge/Progress-90%25-green)
 
-This repository contains an implementation of Active Queue Management with Backward Explicit Congestion Notification (ECN ABE) for NS3. Below are the resources and steps followed during the implementation process:
+![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen)
+
+The project represents an implementation of ECN ABE (Explicit Congestion Notification with Alternative Backoff) in accordance with RFC 8511. ECN ABE stands as an enhancement to TCP congestion control, leveraging Explicit Congestion Notification (ECN) for expedited and precise congestion feedback, thereby optimizing network performance and equity. By integrating ABE mechanisms into TCP, this implementation facilitates adaptive backoff strategies, fostering more efficient and responsive congestion control. The project's objective lies in augmenting network resilience and throughput by applying ECN ABE principles to TCP-based communication protocols.
+
+## Throughput and CWND Comparison
+![Throughput with ECN and ECN ABE Modes](Results/Tcp_cubic_throughput.png)
+![CWND with ECN and ECN ABE Modes](Results/Tcp_cubic_cwnd.png)
+The images above show the comparison of throughput and CWND with ECN and ECN ABE modes.
 
 ## Resources
 
@@ -21,7 +27,7 @@ This repository contains an implementation of Active Queue Management with Backw
 3. **Finding Possible Ways to Implement ABE**
    - [Freebsd ECN ABE patch](https://reviews.freebsd.org/rS331214) - Patch for ABE implementation in FreeBSD
    - [Freebsd ECN ABE review](https://reviews.freebsd.org/D11616) - Review on ABE implementation in FreeBSD
-   - RFC [RFC_8511], NS3 documentation, and GitHub code [ns3 github] for TCP implementation were referenced extensively during this phase.
+   - [RFC_8511](https://www.rfc-editor.org/rfc/rfc8511.html), NS3 documentation, and GitHub code [ns3 github] for TCP implementation were referenced extensively during this phase.
 
 4. **Discussion and Selection of Implementation Method**
    - After thorough research, one method was chosen based on code simplicity, code modularity, and adherence to RFC definition.
@@ -32,19 +38,4 @@ This repository contains an implementation of Active Queue Management with Backw
 
 6. **Testing and Validation**
    - [tcp-validation.cc](https://github.com/nsnam/ns-3-dev-git/blob/master/examples/tcp/tcp-validation.cc) - Test code for TCP on a dumbbell topology in NS3, tracing throughput, cwnd, and RTT
-
-7. **User-Facing API for Enabling ECN ABE Separately**
-   - **[To be completed]**
-
-## Usage
-
-[To be completed]
-
-## Contributions
-
-Contributions to this project are welcome. Please follow the guidelines outlined in [Contributing to ns3](Contributing_to_ns3).
-
-## Issues
-
-For any issues or questions, please feel free to open an issue in the repository.
-
+   - [test-framework](https://www.nsnam.org/docs/manual/html/test-framework.html) - Test documentation by NS3
