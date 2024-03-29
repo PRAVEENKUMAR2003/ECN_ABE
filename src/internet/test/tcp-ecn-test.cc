@@ -73,6 +73,7 @@ class TcpEcnTest : public TcpGeneralTest
     void Tx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who) override;
     Ptr<TcpSocketMsgBase> CreateSenderSocket(Ptr<Node> node) override;
     void ConfigureProperties() override;
+    void ConfigureEnvironment() override;
 
   private:
     uint32_t m_cwndChangeCount;  //!< Number of times the congestion window did change
@@ -209,7 +210,7 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
-        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        else if (m_testcase == 7 && (m_dataPacketSent == 15))
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
@@ -237,7 +238,7 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
-        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        else if (m_testcase == 7 && (m_dataPacketSent == 15))
         {
             ipTosTag.SetTos(MarkEcnCe(GetIpTos()));
         }
@@ -263,7 +264,7 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
-        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        else if (m_testcase == 7 && (m_dataPacketSent == 15))
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
@@ -291,7 +292,7 @@ TcpSocketCongestedRouter::SendDataPacket(SequenceNumber32 seq, uint32_t maxSize,
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
-        else if (m_testcase == 7 && (m_dataPacketSent == 5))
+        else if (m_testcase == 7 && (m_dataPacketSent == 15))
         {
             ipTclassTag.SetTclass(MarkEcnCe(GetIpv6Tclass()));
         }
@@ -429,19 +430,27 @@ void
 TcpEcnTest::ConfigureProperties()
 {
     TcpGeneralTest::ConfigureProperties();
-    if (m_testcase == 2 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
+    if (m_testcase == 2 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6 || m_testcase == 7)
     {
         SetUseEcn(SENDER, TcpSocketState::On);
     }
     if( m_testcase ==7)
     {
-    	SetUseEcn(SENDER, TcpSocketState::On);
         SetEcnMode(SENDER, TcpSocketState::AbeEcn);
-        SetUseEcn(RECEIVER, TcpSocketState::On);   
     }
-    if (m_testcase == 3 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6)
+    if (m_testcase == 3 || m_testcase == 4 || m_testcase == 5 || m_testcase == 6 || m_testcase == 7)
     {
         SetUseEcn(RECEIVER, TcpSocketState::On);
+    }
+}
+
+void
+TcpEcnTest::ConfigureEnvironment()
+{
+    TcpGeneralTest::ConfigureEnvironment();
+    if (m_testcase == 7)
+    {
+        SetAppPktCount(30);
     }
 }
 
@@ -473,7 +482,7 @@ TcpEcnTest::CWndTrace(uint32_t oldValue, uint32_t newValue)
         else if (newValue < oldValue && m_congControlTypeId == TcpCubic::GetTypeId())
         {
             NS_TEST_ASSERT_MSG_EQ(newValue,
-		                  std::max(static_cast<uint32_t>(oldValue/500*0.85), 1U) * 500,
+		                  std::max(static_cast<uint32_t>(oldValue / 500 * 0.85), 1U) * 500,
 		                          "Congestion window check for Tcp Cubic");
         }
         else if (newValue < oldValue && m_congControlTypeId == TcpNewReno::GetTypeId())
@@ -490,8 +499,6 @@ TcpEcnTest::BytesInFlightTrace(uint32_t oldValue, uint32_t newValue)
 {
    	m_bytesInFlight = newValue;
 }
-
-
 
 void
 TcpEcnTest::Rx(const Ptr<const Packet> p, const TcpHeader& h, SocketWho who)
